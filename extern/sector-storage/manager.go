@@ -324,7 +324,9 @@ func (m *Manager) AddPiece(ctx context.Context, sector abi.SectorID, existingPie
 		if err != nil {
 			return err
 		}
-		m.selector.sid2worker[sector] = w
+		winfo, _ := w.Info(ctx)
+		m.selector.sid2worker[sector] = winfo.Hostname
+		log.Debugf("----> bind sector:%d and worker:%s\n", sector, winfo.Hostname)
 		out = p
 		return nil
 	})
