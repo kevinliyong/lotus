@@ -45,9 +45,9 @@ const mib = 1 << 20
 type WorkerAction func(ctx context.Context, w Worker) error
 
 type WorkerSelector interface {
-	Ok(ctx context.Context, task sealtasks.TaskType, spt abi.RegisteredSealProof, a *workerHandle) (bool, error) // true if worker is acceptable for performing a task
+	Ok(ctx context.Context,sector abi.SectorID,task sealtasks.TaskType, spt abi.RegisteredSealProof, a *workerHandle) (bool, error) // true if worker is acceptable for performing a task
 
-	Cmp(ctx context.Context, task sealtasks.TaskType, a, b *workerHandle) (bool, error) // true if a is preferred over b
+	Cmp(ctx context.Context, sector abi.SectorID,task sealtasks.TaskType, a, b *workerHandle) (bool, error) // true if a is preferred over b
 }
 
 type scheduler struct {
@@ -364,7 +364,7 @@ func (sh *scheduler) trySched() {
 				}
 
 				rpcCtx, cancel := context.WithTimeout(task.ctx, SelectorTimeout)
-				ok, err := task.sel.Ok(rpcCtx, task.taskType, sh.spt, worker)
+				ok, err := task.sel.Ok(rpcCtx, task.sector,task.taskType, sh.spt, worker)
 				cancel()
 				if err != nil {
 					log.Errorf("trySched(1) req.sel.Ok error: %+v", err)
@@ -379,6 +379,7 @@ func (sh *scheduler) trySched() {
 			}
 
 			if len(acceptableWindows[sqi]) == 0 {
+				// 遍历了所有的worker没有能满足task.sel.OK的要求的
 				return
 			}
 
@@ -401,7 +402,7 @@ func (sh *scheduler) trySched() {
 				rpcCtx, cancel := context.WithTimeout(task.ctx, SelectorTimeout)
 				defer cancel()
 
-				r, err := task.sel.Cmp(rpcCtx, task.taskType, wi, wj)
+				r, err := task.sel.Cmp(rpcCtx, task.sector,task.taskType, wi, wj)
 				if err != nil {
 					log.Error("selecting best worker: %s", err)
 				}

@@ -27,7 +27,7 @@ func newExistingSelector(index stores.SectorIndex, sector abi.SectorID, alloc st
 	}
 }
 
-func (s *existingSelector) Ok(ctx context.Context, task sealtasks.TaskType, spt abi.RegisteredSealProof, whnd *workerHandle) (bool, error) {
+func (s *existingSelector) Ok(ctx context.Context, sector abi.SectorID,task sealtasks.TaskType, spt abi.RegisteredSealProof, whnd *workerHandle) (bool, error) {
 	tasks, err := whnd.w.TaskTypes(ctx)
 	if err != nil {
 		return false, xerrors.Errorf("getting supported worker task types: %w", err)
@@ -65,7 +65,7 @@ func (s *existingSelector) Ok(ctx context.Context, task sealtasks.TaskType, spt 
 	return false, nil
 }
 
-func (s *existingSelector) Cmp(ctx context.Context, task sealtasks.TaskType, a, b *workerHandle) (bool, error) {
+func (s *existingSelector) Cmp(ctx context.Context, sector abi.SectorID,task sealtasks.TaskType, a, b *workerHandle) (bool, error) {
 	return a.utilization() < b.utilization(), nil
 }
 
