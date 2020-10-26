@@ -10,21 +10,24 @@ import (
 )
 
 type mySelector struct {
-	sid2worker map[abi.SectorID]Worker
+	sid2worker map[abi.SectorID]string
 }
 
 func myNewSelector() *mySelector {
 	return &mySelector{
-		sid2worker: make(map[abi.SectorID]Worker, 32), //一个扇区32G好像，初始化就32个扇区吧，其实在密封任务结束后是可以删除的
+		sid2worker: make(map[abi.SectorID]string, 32), //一个扇区32G好像，初始化就32个扇区吧，其实在密封任务结束后是可以删除的
 	}
 }
 
 func (s *mySelector) Ok(ctx context.Context, sector abi.SectorID, task sealtasks.TaskType, spt abi.RegisteredSealProof, whnd *workerHandle) (bool, error) {
-	if s.sid2worker[sector] == whnd.w {
-		return false, nil
+	winfo, _ := whnd.w.Info(ctx)
+	if s.sid2worker[sector] == winfo.Hostname {
+		log.Debugf("----> find worker:%s for sector:%\n", winfo.Hostname, sector)
+		return true, nil
 	}
 
-	return true, nil
+	log.Debugf("----> can't find worker for sector:%d\n", sector)
+	return false, nil
 }
 
 func (s *mySelector) Cmp(ctx context.Context, sector abi.SectorID, task sealtasks.TaskType, a, b *workerHandle) (bool, error) {
